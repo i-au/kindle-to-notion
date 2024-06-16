@@ -24,7 +24,7 @@ async function createNewClipDatabaseEntry(clip: Clipping, notionInstance: Notion
       location: clip.location,
     },
   }
-  await notionInstance.createClipEntry(createClipEntryParams);
+  return await notionInstance.createClipEntry(createClipEntryParams);
 }
  
 async function createNewbookHighlights(title: string, author: string, highlights: string[],  notionInstance: NotionAdapter) {
@@ -187,16 +187,18 @@ export class Notion {
         const hashId = await this.getIdFromClipHash(clip.hash_id);
 
         // if the clip is already present in notion
-        if (hashId) {
-          console.log(`Clip already present, doing nothing -- THIS IS AN ERROR CASE`);
-          break;
+        if (!hashId) {
+          console.log(`📚 Clip not present, creating notion page`);
+          const result = await createNewClipDatabaseEntry(clip, this.notion);
+          if (result) {
+            updateClipSync(clip);
+          } else {
+            console.log("Failed to create database entry, skipping sync.");
+          }
+        } else {
+          console.log("Found unsynced clipping alreaedy in database; syncing.")
+          updateClipSync(clip);
         }
-
-        console.log(`📚 Clip not present, creating notion page`);
-        await createNewClipDatabaseEntry(clip, this.notion);
-
-        // after each book is successfully synced, update the sync metadata (cache)
-        updateClipSync(clip);
       }
       console.log("\n✅ Successfully synced clips to Notion");
     } catch (error: unknown) {

@@ -11,7 +11,7 @@ import {
   CreatePageResponse,
 } from "@notionhq/client/build/src/api-endpoints";
 import _ from "lodash";
-import { writeToFile, makePageProperties } from "../utils";
+import { writeToFile, makePageProperties, getIdFromClipBook, getIdFromClipAuthor } from "../utils";
 import { Block, CreateClipEntryParams, CreatePageParams } from "../interfaces";
 import { makeClipEntryProperties } from "../utils/notion";
 
@@ -166,13 +166,25 @@ export class NotionAdapter {
 
   createClipEntry = async (
     createClipEntryParams: CreateClipEntryParams
-  ): Promise<CreatePageResponse> => {
+  ): Promise<CreatePageResponse|null> => {
     try {
+      let book_id = await getIdFromClipBook(createClipEntryParams.properties.book, this);
+      let author_id = await getIdFromClipAuthor(createClipEntryParams.properties.author, this);
+
+      if (!book_id) {
+        console.log(`WARNING: No database entry found for book: ${createClipEntryParams.properties.book}`);
+        return null;
+      }
+      if (!author_id) {
+        console.log(`WARNING: No database entry found for author: ${createClipEntryParams.properties.author}`);
+        return null;
+      }
+
       const page: any = {
         parent: {
           database_id: createClipEntryParams.parentDatabaseId,
         },
-        properties: makeClipEntryProperties(createClipEntryParams.properties),
+        properties: await makeClipEntryProperties(createClipEntryParams.properties, book_id || "", author_id || ""),
       };
 
       if (createClipEntryParams.children) {

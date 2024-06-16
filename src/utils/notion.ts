@@ -1,4 +1,5 @@
 import { Block, BlockType, CreateClipEntryProperties, CreatePageProperties } from "../interfaces";
+import { NotionAdapter } from "../adapters";
 
 /* Function to make an array of Notion blocks given the array of highlights and the block type
    Used when appending highlights to an existing Notion page for the book */
@@ -81,7 +82,9 @@ export const makePageProperties = (
 };
 
 export const makeClipEntryProperties = (
-  clipEntryProperties: CreateClipEntryProperties
+  clipEntryProperties: CreateClipEntryProperties,
+  book_id: string,
+  author_id: string
 ): Record<string, unknown> => {
   const properties = {
     "Note or Highlight": {
@@ -97,7 +100,7 @@ export const makeClipEntryProperties = (
       type: "relation",
       relation: [
         {
-          id: clipEntryProperties.book,
+          id: book_id,
         },
       ],
     },
@@ -105,16 +108,25 @@ export const makeClipEntryProperties = (
       type: "relation",
       relation: [
         {
-          id: clipEntryProperties.author,
+          id: author_id,
         },
       ],
     },
     Date: {
-      type: "date",
-      date: {
-          start: clipEntryProperties.date,
-          timezone: null,
-        },
+      type: "rich_text",
+      rich_text: [
+        {
+          type: "text",
+          text: {
+            content: clipEntryProperties.date
+          }
+        }
+      ]
+      // type: "date",
+      // date: {
+      //     start: clipEntryProperties.date,
+      //     timezone: null,
+      //   },
     },
     Page: {
       type: "rich_text",
@@ -152,3 +164,48 @@ export const makeClipEntryProperties = (
   };
   return properties;
 };
+
+
+export const getIdFromClipBook = async (bookName: string, notionInstance: NotionAdapter) => {
+    const response = await notionInstance.queryDatabase({
+      database_id: process.env.CLIPBOOK_DB_ID as string,
+      filter: {
+        or: [
+          {
+            property: "Title",
+            text: {
+              equals: bookName,
+            },
+          },
+        ],
+      },
+    });
+    const [book] = response.results;
+    if (book) {
+      return book.id;
+    } else {
+      return null;
+    }
+  };
+
+export const getIdFromClipAuthor = async (authorName: string, notionInstance: NotionAdapter) => {
+    const response = await notionInstance.queryDatabase({
+      database_id: process.env.AUTHOR_DB_ID as string,
+      filter: {
+        or: [
+          {
+            property: "Name",
+            text: {
+              equals: authorName,
+            },
+          },
+        ],
+      },
+    });
+    const [author] = response.results;
+    if (author) {
+      return author.id;
+    } else {
+      return null;
+    }
+  };

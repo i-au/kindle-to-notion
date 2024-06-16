@@ -83,7 +83,6 @@ export class Parser {
       const clipping = clippingsSplit[i];
       const regex = new RegExp(this.regex.source);
       const match = regex.exec(clipping);
-      console.log(match);
       this.addToClippingsArray(match);
     }
   };
@@ -91,7 +90,6 @@ export class Parser {
   /* Wrapper method to process clippings */
   processClippings = (): Clipping[] => {
     this.parseClippings();
-    console.log(this.clippings);
     // this.groupClippings();
     // this.exportGroupedClippings();
     this.exportClippings();

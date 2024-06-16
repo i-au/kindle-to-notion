@@ -10,4 +10,4 @@ export {
   formatDate,
   cyrb53,
 } from "./common";
-export { makeBlocks, makeHighlightsBlocks, makePageProperties } from "./notion";
+export { makeBlocks, makeHighlightsBlocks, makePageProperties, getIdFromClipAuthor, getIdFromClipBook } from "./notion";
