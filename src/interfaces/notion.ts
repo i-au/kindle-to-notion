@@ -32,6 +32,25 @@ export interface Block {
   heading_3?: Text;
 }
 
+export interface CreateClipEntryProperties {
+  hash_id: string;
+  book: string;
+  author: string;
+  date: string;
+  highlight: string;
+  page: string;
+  location: string;
+}
+
+export interface CreateClipEntryParams {
+  parentDatabaseId: string;
+  properties: CreateClipEntryProperties;
+  children?: Block[];
+  icon?: Emoji;
+  cover?: string;
+}
+
+
 export interface CreatePageProperties {
   title: string;
   author: string;

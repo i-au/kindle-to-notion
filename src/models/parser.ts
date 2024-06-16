@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { Clipping, GroupedClipping } from "../interfaces";
-import { writeToFile, readFromFile, formatAuthorName } from "../utils";
+import { writeToFile, readFromFile, formatAuthorName, formatPage, formatLocation, formatDate, cyrb53 } from "../utils";
 
 export class Parser {
   private fileName = "My Clippings.txt";
@@ -28,14 +28,21 @@ export class Parser {
     writeToFile(this.groupedClippings, "grouped-clippings.json", "data");
   };
 
+  exportClippings = () => {
+    writeToFile(this.clippings, "newform-clippings.json", "data");
+  };
+
   /* Method add the parsed clippings to the clippings array */
   addToClippingsArray = (match: RegExpExecArray | null) => {
     if (match) {
       const title = match[1];
       let author = formatAuthorName(match[2]);
       const highlight = match[4];
-
-      this.clippings.push({ title, author, highlight });
+      let page = formatPage(match[3]);
+      let location = formatLocation(match[3]);
+      let date = formatDate(match[3]);
+      let hash_id = cyrb53(`${title}${author}${page}${location}`).toString();
+      this.clippings.push({ hash_id, title, author, highlight, page, location, date });
     }
   };
 
@@ -76,16 +83,19 @@ export class Parser {
       const clipping = clippingsSplit[i];
       const regex = new RegExp(this.regex.source);
       const match = regex.exec(clipping);
+      console.log(match);
       this.addToClippingsArray(match);
     }
   };
 
   /* Wrapper method to process clippings */
-  processClippings = (): GroupedClipping[] => {
+  processClippings = (): Clipping[] => {
     this.parseClippings();
-    this.groupClippings();
-    this.exportGroupedClippings();
-    this.printStats();
-    return this.groupedClippings;
+    console.log(this.clippings);
+    // this.groupClippings();
+    // this.exportGroupedClippings();
+    this.exportClippings();
+    // this.printStats();
+    return this.clippings;
   };
 }

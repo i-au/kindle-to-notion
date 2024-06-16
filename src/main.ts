@@ -8,5 +8,5 @@ const notion = new Notion();
   const clippings = parser.processClippings();
 
   // sync highlights (clippings) to notion
-  await notion.syncHighlights(clippings);
+  await notion.syncHighlights_Clippings(clippings);
 })();

@@ -12,7 +12,8 @@ import {
 } from "@notionhq/client/build/src/api-endpoints";
 import _ from "lodash";
 import { writeToFile, makePageProperties } from "../utils";
-import { Block, CreatePageParams } from "../interfaces";
+import { Block, CreateClipEntryParams, CreatePageParams } from "../interfaces";
+import { makeClipEntryProperties } from "../utils/notion";
 
 /* Adapter to interact with Notion API directly */
 export class NotionAdapter {
@@ -159,6 +160,46 @@ export class NotionAdapter {
       return response;
     } catch (error: unknown) {
       console.error("Failed to create page", error);
+      throw error;
+    }
+  };
+
+  createClipEntry = async (
+    createClipEntryParams: CreateClipEntryParams
+  ): Promise<CreatePageResponse> => {
+    try {
+      const page: any = {
+        parent: {
+          database_id: createClipEntryParams.parentDatabaseId,
+        },
+        properties: makeClipEntryProperties(createClipEntryParams.properties),
+      };
+
+      if (createClipEntryParams.children) {
+        page["children"] = createClipEntryParams.children;
+      }
+
+      if (createClipEntryParams.icon) {
+        page["icon"] = {
+          type: "emoji",
+          emoji: createClipEntryParams.icon,
+        };
+      }
+
+      if (createClipEntryParams.cover) {
+        page["cover"] = {
+          type: "external",
+          external: {
+            url: createClipEntryParams.cover,
+          },
+        };
+      }
+
+      const response = await this.notion.pages.create(page);
+      writeToFile(response, "create-clip-entry-response.json", "data");
+      return response;
+    } catch (error: unknown) {
+      console.error("Failed to create clip entry", error);
       throw error;
     }
   };

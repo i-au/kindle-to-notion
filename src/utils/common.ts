@@ -1,6 +1,6 @@
 import path from "path";
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { GroupedClipping, Sync } from "../interfaces";
+import { Clipping, GroupedClipping, Sync, ClipSync } from "../interfaces";
 import _ from "lodash";
 
 /* Function to write to a file given the file, fileName and optionally the dirName */
@@ -21,6 +21,24 @@ export const readFromFile = (fileName: string, dirName: string): string => {
     path.join(path.dirname(__dirname), `../${dirName}/${fileName}`),
     "utf-8"
   );
+};
+
+/* Function to update the sync cache after every book is successfully synced */
+export const updateClipSync = (clip: Clipping) => {
+  const oldSync: ClipSync[] = JSON.parse(readFromFile("sync-clippings.json", "resources"));
+  const clipSync = _.find(oldSync, { hash_id: clip.hash_id });
+  let newSync: ClipSync[] = [];
+  if (clipSync) {
+    _.remove(oldSync, { hash_id: clip.hash_id });
+  }
+  newSync = [
+    ...oldSync,
+    {
+      hash_id: clip.hash_id,
+      date: clip.date,
+    },
+  ];
+  writeToFile(newSync, "sync-clippings.json", "resources");
 };
 
 /* Function to update the sync cache after every book is successfully synced */
@@ -49,6 +67,38 @@ export const updateSync = (book: GroupedClipping) => {
     ];
   }
   writeToFile(newSync, "sync.json", "resources");
+};
+
+export const getUnsyncedClippings = (clippings: Clipping[]) => {
+
+  // create empty cache if it doesn't already exist
+  const cacheFile = path.join(
+    path.dirname(__dirname),
+    `../resources/sync-clippings.json`
+  );
+
+  if (!existsSync(cacheFile)) {
+    writeFileSync(cacheFile, "[]");
+  };
+
+  const sync: ClipSync[] = JSON.parse(readFromFile("sync-clippings.json", "resources"));
+  const unsynced_clippings: Clipping[] = [];
+
+  if (sync.length > 0) {
+    console.log("Found clippings already synced.");
+    for (const clip of clippings) {
+      const clip_sync = _.find(sync, { hash_id: clip.hash_id });
+      if (clip_sync) {
+        // TODO: if the dates don't match, take the new one
+      } else {
+        unsynced_clippings.push(clip);
+      }
+    }
+    console.log("------------------------------------");
+    return unsynced_clippings;
+  } else {
+    return clippings;
+  }
 };
 
 /* Function to get unsynced highlights for each book */
@@ -106,4 +156,55 @@ export const formatAuthorName = (author: string) => {
     author = `${names[1]} ${names[0]}`;
   }
   return author;
+};
+
+export const formatPage = (input: string) => {
+  if (input.includes("on page")) {
+    let parts = input.split("|");
+    let section = parts.find((e) => e.includes("on page"));
+    section ??= "page not found";
+    section = section.replace("on", "");
+    section = section.trim();
+    return section;
+  }
+  return "no page listed";
+}
+
+export const formatLocation = (input: string) => {
+  if (input.includes("Location")) {
+    let parts = input.split("|");
+    let section = parts.find((e) => e.includes("Location"));
+    section ??= "location not found";
+    section = section.replace(" on", "");
+    section = section.trim();
+    return section;
+  }
+  return "no location listed";
+};
+
+export const formatDate = (input: string) => {
+  if (input.includes("Added on")) {
+    let parts = input.split("|");
+    let section = parts.find((e) => e.includes("Added on"));
+    section ??= "date not found";
+    section = section.replace("Added on", "");
+    section = section.trim();
+    return section;
+  }
+  return "no date listed";
+};
+
+export const cyrb53 = (str : string, seed = 0) => {
+    let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
+    for(let i = 0, ch; i < str.length; i++) {
+        ch = str.charCodeAt(i);
+        h1 = Math.imul(h1 ^ ch, 2654435761);
+        h2 = Math.imul(h2 ^ ch, 1597334677);
+    }
+    h1  = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    h2  = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };

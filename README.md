@@ -51,6 +51,7 @@ To sync your highlights, just upload the new ```My Clippings.txt``` file into yo
             options: |
               -v ${{ github.workspace }}:/code/resources 
               -e BOOK_DB_ID=${{ vars.BOOK_DB_ID }}
+              -e CLIP_DB_ID=${{ vars.CLIP_DB_ID }}
               -e NOTION_API_KEY=${{ secrets.NOTION_API_KEY }}
 
         - name: Commit cache changes
@@ -65,7 +66,7 @@ To sync your highlights, just upload the new ```My Clippings.txt``` file into yo
             github_token: ${{ secrets.GITHUB_TOKEN }}
   ```
 
-- The above step will trigger a GitHub action to sync the highlights. But, it will fail as you haven't yet setup the `NOTION_API_KEY` and the `BOOK_DB_ID`. To do that, go to the GitHub repository settings, click on *Secrets and Variables* and then click on *Actions*. Now, create a secret by the name `NOTION_API_KEY` and a variable by the name `BOOK_DB_ID`, with their corresponding values as obtained in the previous steps.
+- The above step will trigger a GitHub action to sync the highlights. But, it will fail as you haven't yet setup the `NOTION_API_KEY` and the `BOOK_DB_ID` or `CLIP_DB_ID`. To do that, go to the GitHub repository settings, click on *Secrets and Variables* and then click on *Actions*. Now, create a secret by the name `NOTION_API_KEY` and a variable by the name `BOOK_DB_ID` and `CLIP_DB_ID`, with their corresponding values as obtained in the previous steps.
 ![](/images/configuring-secrets.png)
 
 - Now, you need to allow GitHub Action to save the cache (make updates) to the repository. For that, go to repository settings. Click on *Actions* and then on *General*. Scroll down to *Workflow permissions* and select *Read and write permissions*.
